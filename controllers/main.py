@@ -40,5 +40,5 @@ class WebsiteSaleCustom(WebsiteSale):
                 order.partner_id.name,
                 order.partner_id.id,
             )
-        # En lugar de redirect, seguimos al siguiente paso (checkout)
-        return http.request.redirect("/shop/checkout")
+        # Redirect de vuelta al carrito para quedarse allí
+        return http.request.redirect("/shop/cart")
