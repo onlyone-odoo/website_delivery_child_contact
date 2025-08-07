@@ -8,49 +8,31 @@ _logger = logging.getLogger(__name__)
 class WebsiteSaleCustom(WebsiteSale):
     @http.route(["/shop/cart"], type="http", auth="public", website=True, sitemap=False)
     def cart(self, access_token=None, revive="", **post):
+        _logger.info("=== Custom Cart Controller Called ===")
         response = super(WebsiteSaleCustom, self).cart(access_token, revive, **post)
-        order = http.request.website.sale_get_order(
-            force_create=True
-        )  # Forzamos creación del order
+        order = http.request.website.sale_get_order(force_create=True)
         child_contacts = http.request.env["res.partner"]
-        _logger.info("=== Cart Debug Start ===")
         _logger.info(
             "User: %s (ID: %s)", http.request.env.user.name, http.request.env.user.id
         )
         if order and order.partner_id:
-            _logger.info(
-                "Order ID: %s, Partner ID: %s, Partner Name: %s",
-                order.id,
-                order.partner_id.id,
-                order.partner_id.name,
-            )
-            # Probamos sin filtro de tipo para ver todos los hijos
+            _logger.info("Order ID: %s, Partner ID: %s", order.id, order.partner_id.id)
             all_childs = order.partner_id.child_ids.sudo()
             _logger.info(
-                "All Child Contacts: %s",
-                [(c.id, c.name, c.type, c.active) for c in all_childs],
+                "All Childs: %s", [(c.id, c.name, c.type, c.active) for c in all_childs]
             )
-            child_contacts = all_childs.filtered(
-                lambda p: p.active
-            )  # Solo activo, sin filtro de tipo
+            child_contacts = all_childs.filtered(lambda p: p.active)
             _logger.info(
-                "Filtered Child Contacts: %s",
+                "Filtered Childs: %s",
                 [(c.id, c.name, c.type, c.active) for c in child_contacts],
             )
-            if not child_contacts:
-                _logger.info(
-                    "No active child contacts found for partner %s", order.partner_id.id
-                )
         else:
-            _logger.error(
-                "No order or partner found! Order: %s, User: %s",
-                order,
-                http.request.env.user,
-            )
+            _logger.info("No order or partner!")
         response.qcontext["child_contacts"] = child_contacts
         _logger.info("QContext keys: %s", response.qcontext.keys())
-        _logger.info("=== Cart Debug End ===")
         return response
+
+    # Mantén el select_child igual
 
     @http.route(
         ["/shop/select_child"],
