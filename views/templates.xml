@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="address_inherit" inherit_id="website_sale.address">
+        <xpath expr="//select[@name='shipping_id']" position="attributes">
+            <!-- Si hay un filtro en la plantilla, ajusta el loop para incluir 'contact' -->
+            <attribute name="t-foreach">addresses.filtered(lambda a: a.type in ('delivery', 'contact'))</attribute>
+        </xpath>
+    </template>
+</odoo>
