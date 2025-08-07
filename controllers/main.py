@@ -36,14 +36,15 @@ class WebsiteSaleCustom(WebsiteSale):
                 and child.parent_id == order.partner_id
                 and child.type in ("contact", "delivery")
             ):
-                order.sudo().partner_shipping_id = (
-                    child  # Usa sudo() para write seguro en portal
-                )
+                order.sudo().write(
+                    {"partner_shipping_id": child.id}
+                )  # Usa write explícito con sudo
                 selected = child.name
         else:
-            order.sudo().partner_shipping_id = order.partner_id
+            order.sudo().write({"partner_shipping_id": order.partner_id.id})
             selected = order.partner_id.name
-        order.env.flush_all()  # Forza flush a DB para persistir cambios inmediatamente
+        order.sudo()._compute_partner_shipping_id()  # Recomputa para cache
+        order.env.flush_all()  # Forza persistencia en DB
         _logger.info(
             "Updated order %s with shipping_id %s",
             order.id,
