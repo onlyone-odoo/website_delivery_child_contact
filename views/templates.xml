@@ -4,7 +4,7 @@
         <xpath expr="//h3[@class='mb-4']" position="after">
             <span>Hola mundo</span>
             <div>
-                <p>Child Contacts Debug: <t t-esc="child_contacts"/></p>
+                <p>Child Contacts Debug: <t t-esc="child_contacts.mapped('name')"/></p>
                 <t t-if="child_contacts">
                     <form action="/shop/select_child" method="post" class="mb-4">
                         <label class="form-label">Comprando para:</label>
@@ -12,7 +12,7 @@
                             <option value="">Yo mismo</option>
                             <t t-foreach="child_contacts" t-as="child">
                                 <option t-att-value="child.id" t-att-selected="website_sale_order.partner_shipping_id.id == child.id">
-                                    <t t-esc="child.name"/>
+                                    <t t-esc="child.name"/> (ID: <t t-esc="child.id"/>, Type: <t t-esc="child.type"/>)
                                 </option>
                             </t>
                         </select>
