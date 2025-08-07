@@ -2,12 +2,13 @@
 <odoo>
     <template id="cart_inherit" inherit_id="website_sale.cart">
         <xpath expr="//h3[@class='mb-4']" position="after">
+            <span>Hola mundo</span>
             <div>
+                <p>Child Contacts Debug: <t t-esc="child_contacts.mapped('name')"/></p>
                 <t t-if="child_contacts">
-                    <p>Child Contacts Debug: <t t-esc="child_contacts.mapped('name')"/></p>
-                    <form action="/shop/select_child" method="post" class="mb-4">
+                    <div class="mb-4">
                         <label class="form-label">Comprando para:</label>
-                        <select name="child_id" class="form-select" onchange="this.form.submit()">
+                        <select id="child_select" class="form-select">
                             <option value="">Yo mismo</option>
                             <t t-foreach="child_contacts" t-as="child">
                                 <option t-att-value="child.id" t-att-selected="website_sale_order.partner_shipping_id.id == child.id">
@@ -15,10 +16,24 @@
                                 </option>
                             </t>
                         </select>
-                    </form>
+                    </div>
+                    <script>
+                        (function () {
+                            $('#child_select').on('change', function () {
+                                var childId = $(this).val();
+                                $.post('/shop/select_child', { child_id: childId }).done(function (response) {
+                                    // Opcional: Actualiza UI si necesitas, ej. mostrar confirmación
+                                    console.log('Selección guardada:', response);
+                                    // Si el backend devuelve algo, puedes refrescar partes de la página
+                                }).fail(function () {
+                                    alert('Error al guardar la selección.');
+                                });
+                            });
+                        })();
+                    </script>
                 </t>
                 <t t-else="">
-                    <p>No hay contactos hijos disponibles o child_contacts es None.</p>
+                    <p>No hay contactos hijos disponibles.</p>
                 </t>
             </div>
         </xpath>

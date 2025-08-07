@@ -13,32 +13,32 @@ class WebsiteSaleCustom(WebsiteSale):
         child_contacts = http.request.env["res.partner"]
         if order and order.partner_id:
             all_childs = order.partner_id.child_ids.sudo()
-            child_contacts = all_childs.filtered(lambda p: p.active)
+            child_contacts = all_childs.filtered(
+                lambda p: p.type in ("contact", "delivery") and p.active
+            )
         response.qcontext["child_contacts"] = child_contacts
         return response
 
     @http.route(
         ["/shop/select_child"],
-        type="http",
+        type="json",
         auth="public",
         website=True,
         methods=["POST"],
     )
     def select_child(self, child_id=None, **post):
         order = http.request.website.sale_get_order(force_create=True)
+        selected = None
         if child_id:
             child = http.request.env["res.partner"].sudo().browse(int(child_id))
-            if child and child.parent_id == order.partner_id:
+            if (
+                child
+                and child.parent_id == order.partner_id
+                and child.type in ("contact", "delivery")
+            ):
                 order.partner_shipping_id = child
-                _logger.info(
-                    "Selected shipping partner: %s (ID: %s)", child.name, child.id
-                )
+                selected = child.name
         else:
             order.partner_shipping_id = order.partner_id
-            _logger.info(
-                "Reset to main partner: %s (ID: %s)",
-                order.partner_id.name,
-                order.partner_id.id,
-            )
-        # Redirect de vuelta al carrito para quedarse allí
-        return http.request.redirect("/shop/cart")
+            selected = order.partner_id.name
+        return {"success": True, "selected": selected}
