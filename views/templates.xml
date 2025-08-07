@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="address_inherit" inherit_id="website_sale.address">
-        <xpath expr="//select[@name='shipping_id']" position="attributes">
-            <!-- Si hay un filtro en la plantilla, ajusta el loop para incluir 'contact' -->
-            <attribute name="t-foreach">addresses.filtered(lambda a: a.type in ('delivery', 'contact'))</attribute>
+    <template id="cart_inherit" inherit_id="website_sale.cart">
+        <xpath expr="//h3[@class='mb-4']" position="after">
+            <t t-if="child_contacts">
+                <form action="/shop/select_child" method="post" class="mb-4">
+                    <label class="form-label">Comprando para:</label>
+                    <select name="child_id" class="form-select" onchange="this.form.submit()">
+                        <option value="">Yo mismo</option>
+                        <t t-foreach="child_contacts" t-as="child">
+                            <option t-att-value="child.id" t-att-selected="website_sale_order.partner_shipping_id == child">
+                                <t t-esc="child.name"/>
+                            </option>
+                        </t>
+                    </select>
+                </form>
+            </t>
         </xpath>
     </template>
 </odoo>
