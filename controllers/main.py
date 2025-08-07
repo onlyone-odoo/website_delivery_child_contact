@@ -36,9 +36,17 @@ class WebsiteSaleCustom(WebsiteSale):
                 and child.parent_id == order.partner_id
                 and child.type in ("contact", "delivery")
             ):
-                order.partner_shipping_id = child
+                order.sudo().partner_shipping_id = (
+                    child  # Usa sudo() para write seguro en portal
+                )
                 selected = child.name
         else:
-            order.partner_shipping_id = order.partner_id
+            order.sudo().partner_shipping_id = order.partner_id
             selected = order.partner_id.name
+        order.env.flush_all()  # Forza flush a DB para persistir cambios inmediatamente
+        _logger.info(
+            "Updated order %s with shipping_id %s",
+            order.id,
+            order.partner_shipping_id.id,
+        )
         return {"success": True, "selected": selected}
