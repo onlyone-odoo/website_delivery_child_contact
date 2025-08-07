@@ -11,7 +11,7 @@
                         <select name="child_id" class="form-select" onchange="this.form.submit()">
                             <option value="">Yo mismo</option>
                             <t t-foreach="child_contacts" t-as="child">
-                                <option t-att-value="child.id" t-att-selected="website_sale_order.partner_shipping_id == child">
+                                <option t-att-value="child.id" t-att-selected="website_sale_order.partner_shipping_id.id == child.id">
                                     <t t-esc="child.name"/>
                                 </option>
                             </t>
