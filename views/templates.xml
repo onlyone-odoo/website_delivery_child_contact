@@ -2,19 +2,26 @@
 <odoo>
     <template id="cart_inherit" inherit_id="website_sale.cart">
         <xpath expr="//h3[@class='mb-4']" position="after">
-            <t t-if="child_contacts">
-                <form action="/shop/select_child" method="post" class="mb-4">
-                    <label class="form-label">Comprando para:</label>
-                    <select name="child_id" class="form-select" onchange="this.form.submit()">
-                        <option value="">Yo mismo</option>
-                        <t t-foreach="child_contacts" t-as="child">
-                            <option t-att-value="child.id" t-att-selected="website_sale_order.partner_shipping_id == child">
-                                <t t-esc="child.name"/>
-                            </option>
-                        </t>
-                    </select>
-                </form>
-            </t>
+            <span>Hola mundo</span>
+            <div>
+                <p>Child Contacts Debug: <t t-esc="child_contacts"/></p>
+                <t t-if="child_contacts">
+                    <form action="/shop/select_child" method="post" class="mb-4">
+                        <label class="form-label">Comprando para:</label>
+                        <select name="child_id" class="form-select" onchange="this.form.submit()">
+                            <option value="">Yo mismo</option>
+                            <t t-foreach="child_contacts" t-as="child">
+                                <option t-att-value="child.id" t-att-selected="website_sale_order.partner_shipping_id == child">
+                                    <t t-esc="child.name"/>
+                                </option>
+                            </t>
+                        </select>
+                    </form>
+                </t>
+                <t t-else="">
+                    <p>No hay contactos hijos disponibles.</p>
+                </t>
+            </div>
         </xpath>
     </template>
 </odoo>
