@@ -30,21 +30,21 @@ class WebsiteSaleCustom(WebsiteSale):
         order = http.request.website.sale_get_order(force_create=True)
         selected = None
         if child_id:
-            child = http.request.env["res.partner"].sudo().browse(int(child_id))
-            if (
-                child
-                and child.parent_id == order.partner_id
-                and child.type in ("contact", "delivery")
-            ):
-                order.sudo().write(
-                    {"partner_shipping_id": child.id}
-                )  # Usa write explícito con sudo
-                selected = child.name
-        else:
+            try:
+                child_id = int(child_id)
+                child = http.request.env["res.partner"].sudo().browse(child_id)
+                if (
+                    child
+                    and child.parent_id == order.partner_id
+                    and child.type in ("contact", "delivery")
+                ):
+                    order.sudo().write({"partner_shipping_id": child.id})
+                    selected = child.name
+            except ValueError:
+                pass  # Ignora si child_id no es int válido
+        if not selected:
             order.sudo().write({"partner_shipping_id": order.partner_id.id})
             selected = order.partner_id.name
-        order.sudo()._compute_partner_shipping_id()  # Recomputa para cache
-        order.env.flush_all()  # Forza persistencia en DB
         _logger.info(
             "Updated order %s with shipping_id %s",
             order.id,
