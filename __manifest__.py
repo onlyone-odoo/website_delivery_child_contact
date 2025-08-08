@@ -1,6 +1,6 @@
 {
     "name": "Website Delivery Child Contact",
-    "version": "17.0.4.3.0",
+    "version": "17.0.5.3.1",
     "category": "Website/eCommerce",
     "summary": 'Permitir seleccionar contactos hijos tipo "contact" como direcciones de entrega en el checkout',
     "description": """
@@ -13,8 +13,13 @@
     "license": "AGPL-3",
     "depends": ["website_sale"],
     "data": [
-        "views/templates.xml",  # Si decides agregar herencia de vistas
+        "views/templates.xml",
     ],
+    "assets": {
+        "web.assets_frontend": [
+            "website_delivery_child_contact/static/src/js/child_select.js",
+        ],
+    },
     "installable": True,
     "application": False,
     "auto_install": False,

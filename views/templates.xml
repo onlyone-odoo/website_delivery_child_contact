@@ -17,21 +17,6 @@
                             </t>
                         </select>
                     </div>
-                    <script>
-                        (function () {
-                            $('#child_select').on('change', function () {
-                                var childId = $(this).val();
-                                console.log('Changing to child_id:', childId);
-                                $.post('/shop/select_child', { child_id: childId }).done(function (response) {
-                                    console.log('Success:', response);
-                                    // Opcional: location.reload(); para refrescar cart y ver cambio
-                                }).fail(function (jqXHR, textStatus, errorThrown) {
-                                    console.error('Fail:', textStatus, errorThrown);
-                                    alert('Error: ' + textStatus);
-                                });
-                            });
-                        })();
-                    </script>
                 </t>
                 <t t-else="">
                     <p>No hay contactos hijos disponibles.</p>
