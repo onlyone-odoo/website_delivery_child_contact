@@ -1,6 +1,6 @@
 {
     "name": "Website Delivery Child Contact",
-    "version": "17.0.5.3.1",
+    "version": "17.0.6.3.1",
     "category": "Website/eCommerce",
     "summary": 'Permitir seleccionar contactos hijos tipo "contact" como direcciones de entrega en el checkout',
     "description": """

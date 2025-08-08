@@ -31,8 +31,11 @@ class WebsiteSaleCustom(WebsiteSale):
         website=True,
         methods=["POST"],
     )
-    def select_child(self, child_id=None, **post):
-        _logger.info(f"Received POST with child_id: {post.get('child_id')}")
+    def select_child(self, **post):
+        # Leer el body JSON directamente
+        data = http.request.jsonrequest
+        child_id = data.get("child_id") if data else None
+        _logger.info(f"Received POST with child_id: {child_id}")
         order = http.request.website.sale_get_order(force_create=True)
         _logger.info(
             "Select child called for order %s with child_id: %s", order.id, child_id
@@ -50,8 +53,7 @@ class WebsiteSaleCustom(WebsiteSale):
                 )
                 if (
                     child
-                    and child.parent_id.id
-                    == order.partner_id.id  # Compara IDs explícitamente
+                    and child.parent_id.id == order.partner_id.id
                     and child.type in ("contact", "delivery")
                 ):
                     order.sudo().write({"partner_shipping_id": child.id})
