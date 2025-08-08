@@ -32,6 +32,7 @@ class WebsiteSaleCustom(WebsiteSale):
         methods=["POST"],
     )
     def select_child(self, child_id=None, **post):
+        _logger.info(f"Received POST with child_id: {post.get('child_id')}")
         order = http.request.website.sale_get_order(force_create=True)
         _logger.info(
             "Select child called for order %s with child_id: %s", order.id, child_id
