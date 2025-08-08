@@ -32,8 +32,8 @@ class WebsiteSaleCustom(WebsiteSale):
         methods=["POST"],
     )
     def select_child(self, **post):
-        # Leer el body JSON directamente
-        data = http.request.jsonrequest
+        # Leer el body JSON con get_json_data
+        data = http.request.get_json_data()
         child_id = data.get("child_id") if data else None
         _logger.info(f"Received POST with child_id: {child_id}")
         order = http.request.website.sale_get_order(force_create=True)
