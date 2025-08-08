@@ -21,12 +21,13 @@
                         (function () {
                             $('#child_select').on('change', function () {
                                 var childId = $(this).val();
+                                console.log('Changing to child_id:', childId);
                                 $.post('/shop/select_child', { child_id: childId }).done(function (response) {
-                                    // Opcional: Actualiza UI si necesitas, ej. mostrar confirmación
-                                    console.log('Selección guardada:', response);
-                                    // Si el backend devuelve algo, puedes refrescar partes de la página
-                                }).fail(function () {
-                                    alert('Error al guardar la selección.');
+                                    console.log('Success:', response);
+                                    // Opcional: location.reload(); para refrescar cart y ver cambio
+                                }).fail(function (jqXHR, textStatus, errorThrown) {
+                                    console.error('Fail:', textStatus, errorThrown);
+                                    alert('Error: ' + textStatus);
                                 });
                             });
                         })();

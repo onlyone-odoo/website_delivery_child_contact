@@ -16,6 +16,11 @@ class WebsiteSaleCustom(WebsiteSale):
             child_contacts = all_childs.filtered(
                 lambda p: p.type in ("contact", "delivery") and p.active
             )
+            _logger.info(
+                "Child contacts for order %s: %s",
+                order.id,
+                child_contacts.mapped("name"),
+            )
         response.qcontext["child_contacts"] = child_contacts
         return response
 
@@ -28,26 +33,40 @@ class WebsiteSaleCustom(WebsiteSale):
     )
     def select_child(self, child_id=None, **post):
         order = http.request.website.sale_get_order(force_create=True)
+        _logger.info(
+            "Select child called for order %s with child_id: %s", order.id, child_id
+        )
         selected = None
         if child_id:
             try:
                 child_id = int(child_id)
                 child = http.request.env["res.partner"].sudo().browse(child_id)
+                _logger.info(
+                    "Child found: %s, parent: %s, type: %s",
+                    child.name,
+                    child.parent_id.id,
+                    child.type,
+                )
                 if (
                     child
-                    and child.parent_id == order.partner_id
+                    and child.parent_id.id
+                    == order.partner_id.id  # Compara IDs explícitamente
                     and child.type in ("contact", "delivery")
                 ):
                     order.sudo().write({"partner_shipping_id": child.id})
                     selected = child.name
-            except ValueError:
-                pass  # Ignora si child_id no es int válido
+                    _logger.info(
+                        "Write successful, new shipping_id: %s",
+                        order.partner_shipping_id.id,
+                    )
+                else:
+                    _logger.warning("Condition failed for child %s", child_id)
+            except ValueError as e:
+                _logger.error("Invalid child_id: %s, error: %s", child_id, str(e))
         if not selected:
             order.sudo().write({"partner_shipping_id": order.partner_id.id})
             selected = order.partner_id.name
-        _logger.info(
-            "Updated order %s with shipping_id %s",
-            order.id,
-            order.partner_shipping_id.id,
-        )
+            _logger.info(
+                "Reset to parent, shipping_id: %s", order.partner_shipping_id.id
+            )
         return {"success": True, "selected": selected}
