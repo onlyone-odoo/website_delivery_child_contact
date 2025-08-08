@@ -2,17 +2,15 @@
 <odoo>
     <template id="cart_inherit" inherit_id="website_sale.cart">
         <xpath expr="//h3[@class='mb-4']" position="after">
-            <span>Hola mundo</span>
             <div>
-                <p>Child Contacts Debug: <t t-esc="child_contacts.mapped('name')"/></p>
-                <t t-if="child_contacts">
+                <t t-if="child_contacts and child_contacts.filtered(lambda c: c.type == 'contact')">
                     <div class="mb-4">
                         <label class="form-label">Comprando para:</label>
                         <select id="child_select" class="form-select">
                             <option value="">Yo mismo</option>
-                            <t t-foreach="child_contacts" t-as="child">
+                            <t t-foreach="child_contacts.filtered(lambda c: c.type == 'contact')" t-as="child">
                                 <option t-att-value="child.id" t-att-selected="website_sale_order.partner_shipping_id.id == child.id">
-                                    <t t-esc="child.name"/> (ID: <t t-esc="child.id"/>, Type: <t t-esc="child.type"/>)
+                                    <t t-esc="child.name"/>
                                 </option>
                             </t>
                         </select>
