@@ -14,9 +14,6 @@ class WebsiteSaleCustom(WebsiteSale):
             child_contacts = all_childs.filtered(
                 lambda p: p.type in ("contact", "delivery") and p.active
             )
-            # Si no hay shipping seteado o apunta al principal, usar el primer hijo
-            if child_contacts and order.partner_shipping_id.id == order.partner_id.id:
-                order.sudo().write({"partner_shipping_id": child_contacts[0].id})
 
         response.qcontext["child_contacts"] = child_contacts
         return response
@@ -33,6 +30,7 @@ class WebsiteSaleCustom(WebsiteSale):
         child_id = data.get("child_id") if data else None
         order = http.request.website.sale_get_order(force_create=True)
         selected = None
+
         if child_id:
             try:
                 child_id = int(child_id)
@@ -44,11 +42,10 @@ class WebsiteSaleCustom(WebsiteSale):
                 ):
                     order.sudo().write({"partner_shipping_id": child.id})
                     selected = child.name
-                else:
-                    pass
             except ValueError:
                 pass
+
         if not selected:
-            order.sudo().write({"partner_shipping_id": order.partner_id.id})
-            selected = order.partner_id.name
+            return {"success": False, "error": "Debe seleccionar un contacto válido."}
+
         return {"success": True, "selected": selected}
