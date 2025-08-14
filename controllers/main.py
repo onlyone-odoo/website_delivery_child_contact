@@ -4,15 +4,20 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 
 class WebsiteSaleCustom(WebsiteSale):
     @http.route(["/shop/cart"], type="http", auth="public", website=True, sitemap=False)
-    def cart(self, access_token=None, revive="", **post):
-        response = super(WebsiteSaleCustom, self).cart(access_token, revive, **post)
+    def cart(self, **post):
+        response = super().cart(**post)
         order = http.request.website.sale_get_order(force_create=True)
         child_contacts = http.request.env["res.partner"]
+
         if order and order.partner_id:
             all_childs = order.partner_id.child_ids.sudo()
             child_contacts = all_childs.filtered(
                 lambda p: p.type in ("contact", "delivery") and p.active
             )
+            # Si no hay shipping seteado o apunta al principal, usar el primer hijo
+            if child_contacts and order.partner_shipping_id.id == order.partner_id.id:
+                order.sudo().write({"partner_shipping_id": child_contacts[0].id})
+
         response.qcontext["child_contacts"] = child_contacts
         return response
 
