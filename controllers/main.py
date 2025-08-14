@@ -8,13 +8,11 @@ class WebsiteSaleCustom(WebsiteSale):
         response = super().cart(**post)
         order = http.request.website.sale_get_order(force_create=True)
         child_contacts = http.request.env["res.partner"]
-
         if order and order.partner_id:
             all_childs = order.partner_id.child_ids.sudo()
             child_contacts = all_childs.filtered(
                 lambda p: p.type in ("contact", "delivery") and p.active
             )
-
         response.qcontext["child_contacts"] = child_contacts
         return response
 
@@ -30,8 +28,7 @@ class WebsiteSaleCustom(WebsiteSale):
         child_id = data.get("child_id") if data else None
         order = http.request.website.sale_get_order(force_create=True)
         selected = None
-
-        if child_id:
+        if child_id and child_id != "":  # Asegurar que no sea el placeholder
             try:
                 child_id = int(child_id)
                 child = http.request.env["res.partner"].sudo().browse(child_id)
@@ -44,8 +41,6 @@ class WebsiteSaleCustom(WebsiteSale):
                     selected = child.name
             except ValueError:
                 pass
-
         if not selected:
             return {"success": False, "error": "Debe seleccionar un contacto válido."}
-
         return {"success": True, "selected": selected}
