@@ -23,7 +23,7 @@
             </div>
         </xpath>
     </template>
-    <template inherit_id="website_sale.product" id="select_quantity_inherit">
+    <template inherit_id="website_sale.product_quantity" id="select_quantity_inherit">
         <!-- Ocultar el selector de cantidades existente -->
         <xpath expr="//div[contains(@class, 'css_quantity')]" position="attributes">
             <attribute name="class">css_quantity d-none</attribute>
