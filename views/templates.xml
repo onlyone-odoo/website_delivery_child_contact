@@ -23,4 +23,14 @@
             </div>
         </xpath>
     </template>
+    <template inherit_id="website_sale.product" id="select_quantity_inherit">
+        <!-- Ocultar el selector de cantidades existente -->
+        <xpath expr="//div[contains(@class, 'css_quantity')]" position="attributes">
+            <attribute name="class">css_quantity d-none</attribute>
+        </xpath>
+        <!-- Forzar add_qty a 1 en el formulario oculto -->
+        <xpath expr="//form[@action='/shop/cart/update']" position="inside">
+            <input type="hidden" name="add_qty" value="1"/>
+        </xpath>
+    </template>
 </odoo>
