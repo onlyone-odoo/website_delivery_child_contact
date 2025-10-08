@@ -20,6 +20,8 @@
                 <t t-else="">
                     <p>No hay contactos hijos disponibles.</p>
                 </t>
+                <!-- Temporal: fuerza carga del JS para depurar -->
+                <script type="text/javascript" src="/website_delivery_child_contact/static/src/js/child_select.js"/>
             </div>
         </xpath>
     </template>
