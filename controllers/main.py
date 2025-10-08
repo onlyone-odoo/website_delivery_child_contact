@@ -26,8 +26,9 @@ class WebsiteSaleCustom(WebsiteSale):
                 "All child_ids: %s",
                 [(c.id, c.name, c.type, c.active) for c in all_childs],
             )
-            # Temporal: sin filtro de tipo para depurar; restaura después
-            child_contacts = all_childs.filtered(lambda p: p.active)
+            child_contacts = all_childs.filtered(
+                lambda p: p.type in ("contact", "delivery") and p.active
+            )
             _logger.info(
                 "Filtered child_contacts: %s",
                 [(c.id, c.name, c.type, c.active) for c in child_contacts],
@@ -46,28 +47,47 @@ class WebsiteSaleCustom(WebsiteSale):
         methods=["POST"],
     )
     def select_child(self, child_id=None, **post):
-        child_id = post.get("child_id")  # Más seguro para POST
+        _logger.info("=== Select child route hit. child_id from post: %s", child_id)
+        data = http.request.get_json_data()
+        child_id = data.get("child_id") if data else child_id
+        _logger.info("Parsed child_id: %s (type: %s)", child_id, type(child_id))
         order = http.request.website.sale_get_order(force_create=True)
+        _logger.info("Order ID: %s, Main partner ID: %s", order.id, order.partner_id.id)
         selected = None
         if child_id and child_id != "":
             try:
-                child_id = int(child_id)
-                child = http.request.env["res.partner"].sudo().browse(child_id)
+                child_id_int = int(child_id)
+                child = http.request.env["res.partner"].sudo().browse(child_id_int)
+                _logger.info(
+                    "Child fetched: ID %s, Name %s, Parent ID %s, Type %s",
+                    child.id,
+                    child.name,
+                    child.parent_id.id if child.parent_id else "None",
+                    child.type,
+                )
                 if (
                     child
-                    and child.parent_id == order.partner_id
+                    and child.parent_id.id == order.partner_id.id
                     and child.type in ("contact", "delivery")
                 ):
                     order.sudo().write({"partner_shipping_id": child.id})
                     selected = child.name
-                    order.env.flush_all()  # Forza persistencia
+                    order.env.flush_all()
                     _logger.info(
                         "Updated order %s with shipping_id %s",
                         order.id,
                         order.partner_shipping_id.id,
                     )
-            except ValueError:
-                pass
+                else:
+                    _logger.warning(
+                        "Validation failed: child %s parent %s != order partner %s, or type %s not in ('contact', 'delivery')",
+                        child_id_int,
+                        child.parent_id.id if child.parent_id else "None",
+                        order.partner_id.id,
+                        child.type,
+                    )
+            except ValueError as e:
+                _logger.error("ValueError parsing child_id %s: %s", child_id, e)
         if not selected:
             order.sudo().write({"partner_shipping_id": order.partner_id.id})
             selected = order.partner_id.name
@@ -77,4 +97,5 @@ class WebsiteSaleCustom(WebsiteSale):
                 order.id,
                 order.partner_shipping_id.id,
             )
+        _logger.info("Returning: success=True, selected=%s", selected)
         return {"success": True, "selected": selected}
