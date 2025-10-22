@@ -1,9 +1,8 @@
-odoo.define('website_delivery_child_contact.child_select', ['web.public.widget', 'web.core', 'web.ajax'], function (require) {
+odoo.define('website_delivery_child_contact.child_select', ['web.public.widget', 'web.core'], function (require) {
     'use strict';
 
     var publicWidget = require('web.public.widget');
     var core = require('web.core');
-    var ajax = require('web.ajax');
     var _t = core._t;  // For translations
 
     publicWidget.registry.WebsiteSaleChildSelect = publicWidget.Widget.extend({
@@ -30,15 +29,23 @@ odoo.define('website_delivery_child_contact.child_select', ['web.public.widget',
             }
 
             var self = this;
-            ajax.jsonRpc('/shop/select_child', 'call', {child_id: child_id}).then(function (result) {
+            $.ajax({
+                url: '/shop/select_child',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ child_id: child_id }),
+            }).done(function (result) {
+                console.log('AJAX Success - Result:', result);
                 if (result.success) {
                     console.log('Selected:', result.selected);
                     // Optional: Update UI without reload, e.g., show a confirmation message
                     self._showSuccessMessage(result.selected);
+                } else {
+                    alert(_t('Error del servidor: ') + (result.error || _t('Desconocido.')));
                 }
-            }).fail(function (error, event) {
-                console.log('JSON-RPC Fail:', error);
-                alert(_t('Error al seleccionar: ') + (error.message || _t('Error desconocido.')));
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log('AJAX Fail:', textStatus, errorThrown);
+                alert(_t('Error al seleccionar: ') + textStatus);
             });
 
             this._toggleCheckoutButton();
