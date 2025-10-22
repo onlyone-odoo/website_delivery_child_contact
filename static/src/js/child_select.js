@@ -1,8 +1,9 @@
-odoo.define('website_delivery_child_contact.child_select', ['web.public.widget', 'web.core'], function (require) {
+odoo.define('website_delivery_child_contact.child_select', ['web.public.widget', 'web.core', 'web.ajax'], function (require) {
     'use strict';
 
     var publicWidget = require('web.public.widget');
     var core = require('web.core');
+    var ajax = require('web.ajax');
     var _t = core._t;  // For translations
 
     publicWidget.registry.WebsiteSaleChildSelect = publicWidget.Widget.extend({
@@ -29,7 +30,7 @@ odoo.define('website_delivery_child_contact.child_select', ['web.public.widget',
             }
 
             var self = this;
-            $.jsonRpc('/shop/select_child', 'call', {child_id: child_id}).then(function (result) {
+            ajax.jsonRpc('/shop/select_child', 'call', {child_id: child_id}).then(function (result) {
                 if (result.success) {
                     console.log('Selected:', result.selected);
                     // Optional: Update UI without reload, e.g., show a confirmation message
