@@ -111,13 +111,29 @@ class WebsiteSaleCustom(WebsiteSale):
         """Override confirm_order to enforce child selection."""
         order = request.website.sale_get_order()
         if order:
+            _logger.info(
+                "=== Confirm order hit for order %s. Partner ID: %s, Shipping ID: %s",
+                order.id,
+                order.partner_id.id,
+                order.partner_shipping_id.id if order.partner_shipping_id else "None",
+            )
             child_contacts = order.partner_id.child_ids.sudo().filtered(
                 lambda p: p.type in ("contact", "delivery") and p.active
             )
-            if child_contacts and order.partner_shipping_id == order.partner_id:
-                # If children exist but none selected (shipping_id is parent), redirect with error
+            _logger.info(
+                "Child contacts in confirm: %s",
+                [(c.id, c.name, c.type) for c in child_contacts],
+            )
+            if child_contacts and order.partner_shipping_id.id == order.partner_id.id:
                 _logger.warning(
-                    "Confirmation blocked: No child selected for order %s", order.id
+                    "Confirmation blocked: Shipping ID %s == Partner ID %s, no child selected.",
+                    order.partner_shipping_id.id,
+                    order.partner_id.id,
                 )
                 return request.redirect("/shop/cart?error=select_child")
+            else:
+                _logger.info(
+                    "Confirmation allowed: Shipping ID %s is valid child.",
+                    order.partner_shipping_id.id,
+                )
         return super(WebsiteSaleCustom, self).confirm_order(**post)
