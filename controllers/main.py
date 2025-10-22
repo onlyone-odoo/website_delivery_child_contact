@@ -1,6 +1,7 @@
+import logging
 from odoo import http
 from odoo.addons.website_sale.controllers.main import WebsiteSale
-import logging
+from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
@@ -8,9 +9,10 @@ _logger = logging.getLogger(__name__)
 class WebsiteSaleCustom(WebsiteSale):
     @http.route(["/shop/cart"], type="http", auth="public", website=True, sitemap=False)
     def cart(self, access_token=None, revive="", **post):
+        """Override cart to add child contacts to qcontext."""
         _logger.info("=== Cart loaded ===")
         response = super(WebsiteSaleCustom, self).cart(access_token, revive, **post)
-        order = http.request.website.sale_get_order(force_create=True)
+        order = request.website.sale_get_order(force_create=True)
         if order:
             _logger.info(
                 "Order ID: %s, Partner ID: %s",
@@ -19,13 +21,14 @@ class WebsiteSaleCustom(WebsiteSale):
             )
         else:
             _logger.warning("No order found!")
-        child_contacts = http.request.env["res.partner"]
+        child_contacts = request.env["res.partner"]
         if order and order.partner_id:
             all_childs = order.partner_id.child_ids.sudo()
             _logger.info(
                 "All child_ids: %s",
                 [(c.id, c.name, c.type, c.active) for c in all_childs],
             )
+            # Filter to active contacts or delivery types (adjust if only 'contact' is needed)
             child_contacts = all_childs.filtered(
                 lambda p: p.type in ("contact", "delivery") and p.active
             )
@@ -36,6 +39,8 @@ class WebsiteSaleCustom(WebsiteSale):
         else:
             _logger.warning("No partner_id in order!")
         response.qcontext["child_contacts"] = child_contacts
+        # Add error flag if coming from failed confirmation
+        response.qcontext["error"] = post.get("error")
         _logger.info("qcontext keys: %s", response.qcontext.keys())
         return response
 
@@ -47,17 +52,18 @@ class WebsiteSaleCustom(WebsiteSale):
         methods=["POST"],
     )
     def select_child(self, child_id=None, **post):
+        """JSON route to update shipping partner to selected child."""
         _logger.info("=== Select child route hit. child_id from post: %s", child_id)
-        data = http.request.get_json_data()
+        data = request.get_json_data()
         child_id = data.get("child_id") if data else child_id
         _logger.info("Parsed child_id: %s (type: %s)", child_id, type(child_id))
-        order = http.request.website.sale_get_order(force_create=True)
+        order = request.website.sale_get_order(force_create=True)
         _logger.info("Order ID: %s, Main partner ID: %s", order.id, order.partner_id.id)
         selected = None
         if child_id and child_id != "":
             try:
                 child_id_int = int(child_id)
-                child = http.request.env["res.partner"].sudo().browse(child_id_int)
+                child = request.env["res.partner"].sudo().browse(child_id_int)
                 _logger.info(
                     "Child fetched: ID %s, Name %s, Parent ID %s, Type %s",
                     child.id,
@@ -99,3 +105,19 @@ class WebsiteSaleCustom(WebsiteSale):
             )
         _logger.info("Returning: success=True, selected=%s", selected)
         return {"success": True, "selected": selected}
+
+    @http.route("/shop/confirm_order", type="http", auth="public", website=True)
+    def confirm_order(self, **post):
+        """Override confirm_order to enforce child selection."""
+        order = request.website.sale_get_order()
+        if order:
+            child_contacts = order.partner_id.child_ids.sudo().filtered(
+                lambda p: p.type in ("contact", "delivery") and p.active
+            )
+            if child_contacts and order.partner_shipping_id == order.partner_id:
+                # If children exist but none selected (shipping_id is parent), redirect with error
+                _logger.warning(
+                    "Confirmation blocked: No child selected for order %s", order.id
+                )
+                return request.redirect("/shop/cart?error=select_child")
+        return super(WebsiteSaleCustom, self).confirm_order(**post)

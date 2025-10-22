@@ -3,6 +3,12 @@
     <template id="cart_inherit" inherit_id="website_sale.cart">
         <xpath expr="//h3[@class='mb-4']" position="after">
             <div>
+                <!-- Show error message if redirected from confirm_order -->
+                <t t-if="error == 'select_child'">
+                    <div class="alert alert-danger">
+                        Debe seleccionar un contacto hijo antes de proceder al checkout.
+                    </div>
+                </t>
                 <t t-if="child_contacts and child_contacts.filtered(lambda c: c.type == 'contact')">
                     <div class="mb-4">
                         <label class="form-label">Comprando para:</label>
@@ -20,8 +26,6 @@
                 <t t-else="">
                     <p>No hay contactos hijos disponibles.</p>
                 </t>
-                <!-- Temporal: fuerza carga del JS para depurar -->
-                <script type="text/javascript" src="/website_delivery_child_contact/static/src/js/child_select.js"/>
             </div>
         </xpath>
     </template>
