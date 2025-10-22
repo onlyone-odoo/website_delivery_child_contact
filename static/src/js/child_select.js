@@ -20,11 +20,12 @@
                 data: JSON.stringify({ child_id: childId }),
                 success: function(response) {
                     console.log('AJAX Success - Full response:', response);  // Log completo para depurar
-                    if (response.success) {
-                        console.log('Selection saved successfully. Selected:', response.selected);
-                        showSuccessMessage(response.selected);
+                    let result = response.result || response;  // Unwrap JSON-RPC envelope
+                    if (result.success) {
+                        console.log('Selection saved successfully. Selected:', result.selected);
+                        showSuccessMessage(result.selected);
                     } else {
-                        var errorMsg = response.error || 'Error desconocido del servidor.';
+                        var errorMsg = result.error || 'Error desconocido del servidor.';
                         console.log('Server error:', errorMsg);
                         alert(errorMsg);
                     }
