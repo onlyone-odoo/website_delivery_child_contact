@@ -28,9 +28,9 @@ class WebsiteSaleCustom(WebsiteSale):
                 "All child_ids: %s",
                 [(c.id, c.name, c.type, c.active) for c in all_childs],
             )
-            # Filter to active contacts or delivery types (adjust if only 'contact' is needed)
+            # Filter only active 'contact' types, as per original intent
             child_contacts = all_childs.filtered(
-                lambda p: p.type in ("contact", "delivery") and p.active
+                lambda p: p.type == "contact" and p.active
             )
             _logger.info(
                 "Filtered child_contacts: %s",
@@ -58,7 +58,12 @@ class WebsiteSaleCustom(WebsiteSale):
         child_id = data.get("child_id") if data else child_id
         _logger.info("Parsed child_id: %s (type: %s)", child_id, type(child_id))
         order = request.website.sale_get_order(force_create=True)
-        _logger.info("Order ID: %s, Main partner ID: %s", order.id, order.partner_id.id)
+        _logger.info(
+            "Order ID: %s, Main partner ID: %s, Current shipping ID: %s",
+            order.id,
+            order.partner_id.id,
+            order.partner_shipping_id.id,
+        )
         selected = None
         if child_id and child_id != "":
             try:
@@ -74,19 +79,19 @@ class WebsiteSaleCustom(WebsiteSale):
                 if (
                     child
                     and child.parent_id.id == order.partner_id.id
-                    and child.type in ("contact", "delivery")
+                    and child.type == "contact"  # Only 'contact' as per original
                 ):
                     order.sudo().write({"partner_shipping_id": child.id})
                     selected = child.name
                     order.env.flush_all()
                     _logger.info(
-                        "Updated order %s with shipping_id %s",
+                        "Updated order %s with shipping_id %s (post-write)",
                         order.id,
                         order.partner_shipping_id.id,
                     )
                 else:
                     _logger.warning(
-                        "Validation failed: child %s parent %s != order partner %s, or type %s not in ('contact', 'delivery')",
+                        "Validation failed: child %s parent %s != order partner %s, or type %s != 'contact'",
                         child_id_int,
                         child.parent_id.id if child.parent_id else "None",
                         order.partner_id.id,
@@ -99,7 +104,7 @@ class WebsiteSaleCustom(WebsiteSale):
             selected = order.partner_id.name
             order.env.flush_all()
             _logger.info(
-                "Reset order %s to main partner %s",
+                "Reset order %s to main partner %s (post-write)",
                 order.id,
                 order.partner_shipping_id.id,
             )
@@ -118,15 +123,15 @@ class WebsiteSaleCustom(WebsiteSale):
                 order.partner_shipping_id.id if order.partner_shipping_id else "None",
             )
             child_contacts = order.partner_id.child_ids.sudo().filtered(
-                lambda p: p.type in ("contact", "delivery") and p.active
+                lambda p: p.type == "contact" and p.active  # Only 'contact'
             )
             _logger.info(
                 "Child contacts in confirm: %s",
                 [(c.id, c.name, c.type) for c in child_contacts],
             )
-            if child_contacts and order.partner_shipping_id.id == order.partner_id.id:
+            if child_contacts and order.partner_shipping_id not in child_contacts:
                 _logger.warning(
-                    "Confirmation blocked: Shipping ID %s == Partner ID %s, no child selected.",
+                    "Confirmation blocked: Shipping ID %s not in child_contacts (parent is %s)",
                     order.partner_shipping_id.id,
                     order.partner_id.id,
                 )
