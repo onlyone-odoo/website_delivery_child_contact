@@ -1,4 +1,4 @@
-odoo.define('website_delivery_child_contact.child_select', function (require) {
+odoo.define('website_delivery_child_contact.child_select', ['web.public.widget', 'web.core'], function (require) {
     'use strict';
 
     var publicWidget = require('web.public.widget');
