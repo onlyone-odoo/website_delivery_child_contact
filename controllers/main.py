@@ -64,9 +64,9 @@ class WebsiteSaleCustom(WebsiteSale):
             order.partner_id.id,
             order.partner_shipping_id.id,
         )
-        selected = None
-        if child_id and child_id != "":
-            try:
+        try:
+            selected = None
+            if child_id and child_id != "":
                 child_id_int = int(child_id)
                 child = request.env["res.partner"].sudo().browse(child_id_int)
                 _logger.info(
@@ -97,19 +97,23 @@ class WebsiteSaleCustom(WebsiteSale):
                         order.partner_id.id,
                         child.type,
                     )
-            except ValueError as e:
-                _logger.error("ValueError parsing child_id %s: %s", child_id, e)
-        if not selected:
-            order.sudo().write({"partner_shipping_id": order.partner_id.id})
-            selected = order.partner_id.name
-            order.env.flush_all()
-            _logger.info(
-                "Reset order %s to main partner %s (post-write)",
-                order.id,
-                order.partner_shipping_id.id,
-            )
-        _logger.info("Returning: success=True, selected=%s", selected)
-        return {"success": True, "selected": selected}
+            if not selected:
+                order.sudo().write({"partner_shipping_id": order.partner_id.id})
+                selected = order.partner_id.name
+                order.env.flush_all()
+                _logger.info(
+                    "Reset order %s to main partner %s (post-write)",
+                    order.id,
+                    order.partner_shipping_id.id,
+                )
+            response_data = {"success": True, "selected": selected}
+            _logger.info("Returning response: %s", response_data)
+            return response_data
+        except Exception as e:
+            _logger.error("Error in select_child: %s", str(e))
+            response_data = {"success": False, "error": str(e)}
+            _logger.info("Returning error response: %s", response_data)
+            return response_data
 
     @http.route("/shop/confirm_order", type="http", auth="public", website=True)
     def confirm_order(self, **post):

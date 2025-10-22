@@ -19,7 +19,7 @@
                 contentType: 'application/json',
                 data: JSON.stringify({ child_id: childId }),
                 success: function(response) {
-                    console.log('AJAX Success - Full response:', response);
+                    console.log('AJAX Success - Full response:', response);  // Log completo para depurar
                     if (response.success) {
                         console.log('Selection saved successfully. Selected:', response.selected);
                         showSuccessMessage(response.selected);
